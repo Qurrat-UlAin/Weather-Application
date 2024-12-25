@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Weather App</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
 </head>
@@ -12,7 +13,8 @@
             <h1 class="text-2xl font-bold">Weather App</h1>
             <div>
                 <a href="{{ route('weather.index') }}" class="mr-4 hover:text-gray-300">Home</a>
-                <a href="{{ route('weather.recent') }}" class="hover:text-gray-300">Recent Cities</a>
+                <a href="{{ route('weather.recent') }}" class="mr-4 hover:text-gray-300">Recent Cities</a>
+                <a href="{{ route('weather.favorites') }}" class="hover:text-gray-300">Favorites</a>
             </div>
         </div>
     </nav>
