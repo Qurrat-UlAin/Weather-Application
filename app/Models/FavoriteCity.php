@@ -10,7 +10,7 @@ class FavoriteCity extends Model
 
     public static function toggleFavorite($name, $latitude, $longitude)
     {
-        $favorite = self::where('name', $name)->first();
+        $favorite = self::where('name', $name)->first();//city already favorite to nhi?
         
         if ($favorite) {
             $favorite->delete();

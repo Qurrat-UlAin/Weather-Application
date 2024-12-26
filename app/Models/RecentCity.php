@@ -6,34 +6,33 @@ use Illuminate\Database\Eloquent\Model;
 
 class RecentCity extends Model
 {
-    protected $fillable = ['name', 'latitude', 'longitude', 'view_order'];
+    protected $fillable = ['name', 'latitude', 'longitude', 'view_order', 'last_viewed_at'];
 
     public static function addRecentCity($name, $latitude, $longitude)
     {
-        // Get current count
-        $count = self::count();
+        $now = now();//current timestamp
         
-        // If we already have this city, update its order to most recent
+        // If we already have this city, update its timestamp
         $existingCity = self::where('name', $name)->first();
         if ($existingCity) {
-            self::where('view_order', '>', $existingCity->view_order)
-                ->decrement('view_order');
-            $existingCity->update(['view_order' => $count - 1]);
+            $existingCity->update([
+                'last_viewed_at' => $now,
+                'updated_at' => $now
+            ]);
             return;
         }
 
         // If we have 5 cities, remove the oldest one
-        if ($count >= 5) {
-            self::where('view_order', 0)->delete();
-            self::decrement('view_order');
+        if (self::count() >= 5) {
+            self::oldest('last_viewed_at')->first()->delete();
         }
 
-        // Add new city as most recent
+        // Add new city
         self::create([
             'name' => $name,
             'latitude' => $latitude,
             'longitude' => $longitude,
-            'view_order' => $count >= 5 ? 4 : $count
+            'last_viewed_at' => $now
         ]);
     }
 }

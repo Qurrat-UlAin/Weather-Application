@@ -103,7 +103,7 @@ class WeatherController extends Controller
 
     public function recentCities()
     {
-        $recentCities = RecentCity::orderByDesc('view_order')->get();
+        $recentCities = RecentCity::orderByDesc('last_viewed_at')->get();
         $favoriteCities = FavoriteCity::pluck('name')->toArray();
         return view('weather.recent', compact('recentCities', 'favoriteCities'));
     }
