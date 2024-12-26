@@ -20,46 +20,68 @@ class WeatherController extends Controller
     {
         $city = $request->input('city');
         
-        // Geocoding API call
         $geocodingResponse = Http::get("https://geocoding-api.open-meteo.com/v1/search", [
             'name' => $city,
-            'count' => 1,
+            'count' => 1,  // Changed to 1
             'language' => 'en',
             'format' => 'json'
         ]);
-
+    
         $geocodingData = $geocodingResponse->json();
         
         if (empty($geocodingData['results'])) {
             return response()->json(['error' => 'City not found'], 404);
         }
-
-        $location = $geocodingData['results'][0];
-        $lat = $location['latitude'];
-        $lon = $location['longitude'];
-
-        // Weather API call
+    
         $weatherResponse = Http::get("https://api.open-meteo.com/v1/forecast", [
-            'latitude' => $lat,
-            'longitude' => $lon,
+            'latitude' => $geocodingData['results'][0]['latitude'],
+            'longitude' => $geocodingData['results'][0]['longitude'],
+            'daily' => 'temperature_2m_max,temperature_2m_min,windspeed_10m_max,weathercode',
+            'timezone' => 'auto',
+            'forecast_days' => 7
+        ]);
+    
+        $weatherData = $weatherResponse->json();
+        $location = $geocodingData['results'][0];
+        $cityName = sprintf("%s, %s", $location['name'], $location['country']);
+    
+        return response()->json([
+            'city' => $cityName,
+            'weather' => $weatherData,
+            'coordinates' => [
+                'lat' => $location['latitude'], 
+                'lon' => $location['longitude']
+            ]
+        ]);
+    }
+ 
+    public function weatherByCoordinates(Request $request)
+    {
+        $weatherResponse = Http::get("https://api.open-meteo.com/v1/forecast", [
+            'latitude' => $request->input('latitude'),
+            'longitude' => $request->input('longitude'),
             'daily' => 'temperature_2m_max,temperature_2m_min,windspeed_10m_max,weathercode',
             'timezone' => 'auto',
             'forecast_days' => 7
         ]);
 
         $weatherData = $weatherResponse->json();
+        $cityName = sprintf("%s, %s", 
+            $request->input('name'),
+            $request->input('country')
+        );
 
-        // Store in recent cities
-        RecentCity::addRecentCity($city, $lat, $lon);
-
-        // Check if city is favorited
-        $isFavorite = FavoriteCity::where('name', $location['name'])->exists();
+        RecentCity::addRecentCity($cityName, $request->input('latitude'), $request->input('longitude'));
+        $isFavorite = FavoriteCity::where('name', $cityName)->exists();
 
         return response()->json([
-            'city' => $location['name'],
+            'city' => $cityName,
             'weather' => $weatherData,
             'isFavorite' => $isFavorite,
-            'coordinates' => ['lat' => $lat, 'lon' => $lon]
+            'coordinates' => [
+                'lat' => $request->input('latitude'),
+                'lon' => $request->input('longitude')
+            ]
         ]);
     }
 
